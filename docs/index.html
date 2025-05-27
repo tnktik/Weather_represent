@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>天気情報</title>
+  <style>
+    body { font-family: Arial; }
+    .weather-box { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>天気予報（大阪・和歌山）</h1>
+
+  <div id="osaka" class="weather-box">大阪の天気を取得中...</div>
+  <div id="wakayama" class="weather-box">和歌山の天気を取得中...</div>
+
+  <script>
+    const apiKey = "96f62f0c025cfa5e7ed7bb649f917a36"; // ←ここにOpenWeatherMapのAPIキーを入力
+
+    const cities = [
+      { name: "大阪", id: "1853909", elementId: "osaka" },     // Osaka City ID
+      { name: "和歌山", id: "1926004", elementId: "wakayama" }  // Wakayama City ID
+    ];
+
+    cities.forEach(city => {
+      const url = `https://api.openweathermap.org/data/2.5/weather?id=${city.id}&appid=${apiKey}&lang=ja&units=metric`;
+
+      fetch(url)
+        .then(response => response.json())
+        .then(data => {
+          const temp = data.main.temp;
+          const weather = data.weather[0].description;
+          document.getElementById(city.elementId).innerHTML =
+            `<strong>${city.name}</strong><br>天気: ${weather}<br>気温: ${temp}°C`;
+        })
+        .catch(error => {
+          document.getElementById(city.elementId).innerHTML =
+            `${city.name}の天気情報を取得できませんでした。`;
+          console.error("Error fetching weather:", error);
+        });
+    });
+  </script>
+</body>
+</html>
