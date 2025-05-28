@@ -1,59 +1,54 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>WeatherAPI.com 週間天気予報</title>
+  <meta charset="UTF-8">
+  <title>東京都の天気予報</title>
   <style>
-    .weather-box {
-      border: 1px solid #ccc;
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-    }
+    body { font-family: sans-serif; padding: 2rem; background: #f0f8ff; }
+    h1 { font-size: 24px; }
+    .forecast { margin-top: 1rem; }
+    .day { margin-bottom: 1.5rem; background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 0 4px rgba(0,0,0,0.1); }
+    .date { font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>週間天気予報（大阪・和歌山）</h1>
-  <div id="osaka" class="weather-box">大阪の天気を取得中...</div>
-  <div id="wakayama" class="weather-box">和歌山の天気を取得中...</div>
+  <h1>東京都の天気予報（気象庁データ）</h1>
+  <div id="forecast" class="forecast">読み込み中...</div>
 
   <script>
-    const apiKey = "9012e4b3eee6401ea5d131956252705";  // ここにWeatherAPI.comのAPIキーを入れる
+    async function loadWeather() {
+      const url = "https://www.jma.go.jp/bosai/forecast/data/forecast/270000.json";
 
-    const cities = [
-      { name: "大阪", query: "Osaka", elementId: "osaka" },
-      { name: "和歌山", query: "Wakayama", elementId: "wakayama" }
-    ];
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        const forecasts = data[0].timeSeries[0]; // 日毎の天気情報
 
-    cities.forEach(city => {
-      const url = `https://api.weatherapi.com/v1/forecast.json?key=${apiKey}&q=${city.query}&days=7&lang=ja`;
+        const dates = forecasts.timeDefines;
+        const weatherCodes = forecasts.areas[0].weathers;
 
-      fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error(`HTTPエラー: ${response.status}`);
-          return response.json();
-        })
-        .then(data => {
-          let html = `<strong>${city.name}の週間天気</strong><br>`;
-          data.forecast.forecastday.forEach(day => {
-          const date = day.date;
-          const condition = day.day.condition.text;
-          const iconUrl = "https:" + day.day.condition.icon;
-          const maxTemp = day.day.maxtemp_c;
-          const minTemp = day.day.mintemp_c;
+        const container = document.getElementById('forecast');
+        container.innerHTML = '';
 
-          html += `<div>
-            <img src="${iconUrl}" alt="${condition}" style="vertical-align:middle" />
-            ${date}: ${condition}, 最高${maxTemp}℃ 最低${minTemp}℃
-          </div>`;
-          });
-          document.getElementById(city.elementId).innerHTML = html;
-        })
-        .catch(error => {
-          document.getElementById(city.elementId).innerHTML = `${city.name}の天気情報を取得できませんでした。`;
-          console.error("Fetchエラー:", error);
-        });
-    });
+        for (let i = 0; i < dates.length && i < 3; i++) {
+          const date = new Date(dates[i]);
+          const weather = weatherCodes[i];
+
+          const div = document.createElement('div');
+          div.className = 'day';
+          div.innerHTML = `
+            <div class="date">${date.toLocaleDateString()}</div>
+            <div class="weather">${weather}</div>
+          `;
+          container.appendChild(div);
+        }
+      } catch (error) {
+        document.getElementById('forecast').innerText = "天気情報の取得に失敗しました。";
+        console.error(error);
+      }
+    }
+
+    loadWeather();
   </script>
 </body>
 </html>
